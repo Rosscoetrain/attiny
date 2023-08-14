@@ -10,4 +10,5 @@ For example Marklin M track 5202 turnouts.
 
 Can be used to control any dual solenoid item.
 
+Based on the NMRA DCC accessory pulsed 8 decoder example.
 
