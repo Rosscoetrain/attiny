@@ -1,112 +1,14 @@
-#include <NmraDcc.h>
-#include "PinPulser.h"
-// This is a DCC Accessory Decoder to drive 8 Pulsed Turnouts
+// This is a DCC Accessory Decoder to drive Pulsed Turnouts
 // Based on the NMRA Pulsed 8 stationary decoder
 
-// You can print every DCC packet by un-commenting the line below
-//#define NOTIFY_DCC_MSG
+#include <NmraDcc.h>
+#include "PinPulser.h"
 
-// You can print every notifyDccAccTurnoutOutput call-back by un-commenting the line below
-//#define NOTIFY_TURNOUT_MSG
+#include "defines.h"
 
-// You can also print other Debug Messages uncommenting the line below
-//#define DEBUG_MSG
-
-// Un-comment the line below to enable led acknowledge routine
-//#define TESTING
-
-// Un-comment the line below to enable led acknowledge routine in DCC notification
-//#define TESTING_DCC
-
-// Un-comment the line below to enable learning button and functions
-//#define LEARNING
-
-// Un-comment the line below to enable serial commands and display
-//#define ENABLE_SERIAL
-
-
-// Un-Comment the line below to force CVs to be written to the Factory Default values
-// defined in the FactoryDefaultCVs below on Start-Up
-//#define FORCE_RESET_FACTORY_DEFAULT_CV
-
-// Un-Comment the line below to Enable DCC ACK for Service Mode Programming Read CV Capablilty 
-//#define ENABLE_DCC_ACK  15  // This is A1 on the Iowa Scaled Engineering ARD-DCCSHIELD DCC Shield
-
-// Define the Arduino input Pin number for the DCC Signal 
-#define DCC_PIN     2
-
-#define NUM_TURNOUTS 1                // Set Number of Turnouts (Pairs of Pins)
-#define ACTIVE_OUTPUT_STATE HIGH			// Set the ACTIVE State of the output to Drive the Turnout motor electronics HIGH or LOW 
-
-#define DCC_DECODER_VERSION_NUM 12    // Set the Decoder Version - Used by JMRI to Identify the decoder
-
-struct CVPair
-{
-  uint16_t  CV;
-  uint8_t   Value;
-};
-
-#define CV_ACCESSORY_DECODER_OUTPUT_PULSE_TIME 2  // CV for the Output Pulse ON ms
-#define CV_ACCESSORY_DECODER_CDU_RECHARGE_TIME 3  // CV for the delay in ms to allow a CDU to recharge
-#define CV_ACCESSORY_DECODER_ACTIVE_STATE      4  // CV to define the ON Output State 
-
-// To set the Turnout Addresses for this board you need to change the CV values for CV1 (CV_ACCESSORY_DECODER_ADDRESS_LSB) and 
-// CV9 (CV_ACCESSORY_DECODER_ADDRESS_MSB) in the FactoryDefaultCVs structure below. The Turnout Addresses are defined as: 
-// Base Turnout Address is: ((((CV9 * 64) + CV1) - 1) * 4) + 1 
-// With NUM_TURNOUTS 8 (above) a CV1 = 1 and CV9 = 0, the Turnout Addresses will be 1..8, for CV1 = 2 the Turnout Address is 5..12
-
-CVPair FactoryDefaultCVs [] =
-{
-  {CV_ACCESSORY_DECODER_ADDRESS_LSB, DEFAULT_ACCESSORY_DECODER_ADDRESS & 0xFF},
-  {CV_ACCESSORY_DECODER_ADDRESS_MSB, DEFAULT_ACCESSORY_DECODER_ADDRESS >> 8},
-  {CV_ACCESSORY_DECODER_OUTPUT_PULSE_TIME, 50},   // x 10mS for the output pulse duration
-  {CV_ACCESSORY_DECODER_CDU_RECHARGE_TIME, 30},   // x 10mS for the CDU recharge delay time
-  {CV_ACCESSORY_DECODER_ACTIVE_STATE,    ACTIVE_OUTPUT_STATE},
-  {CV_29_CONFIG, CV29_ACCESSORY_DECODER},
-};
-
-uint8_t FactoryDefaultCVIndex = 0;
-
-// This is the Pin Mapping to Turnout Addresses with 2 pins per turnout 
-// The Pins are defined in Pairs T=Thrown, C=Closed (Digitrax Notation)  
-
-//   base address 1T 1C
-byte outputs[] = { 3, 4 };
-
-// for 2 turnouts
-//     base address 1T 1C 2T 2C
-//byte outputs[] = { 0, 1, 3, 4 };
-
-
-NmraDcc  Dcc ;
-DCC_MSG  Packet ;
-PinPulser pinPulser;
-uint16_t BaseTurnoutAddress;
-
-
-
-/*
- * Rosscoe Train functions and variables
- */
-#ifdef LEARNING
-// for address learning mode
-int LEARNINGBUTTON = 5;       // pin 5 on attiny85
-int learningMode = LOW;
-#endif
-
-#define LEDCONTROL 1
-
-#ifdef ENABLE_SERIAL
-// buffer to hold serial commands
-String readString;
-#endif
-
+#include "variables.h"
 
 #include "functions.h"
-
-/*
- * RT end
- */
 
 
 // This function is called whenever a normal DCC Turnout Packet is received
